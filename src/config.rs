@@ -1,5 +1,5 @@
 use dotenv::dotenv;
-use std::env;
+use std;
 
 pub struct Config {
     pub server: String,
@@ -33,9 +33,9 @@ pub mod tests {
     #[test]
     fn test_config_from_env() {
         unsafe {
-            env::set_var("BACKEND_URL", "testserver");
-            env::set_var("BACKEND_PORT", "8180");
-            env::set_var("DATABASE_URL", "postgres://test:test@localhost/test");
+            std::env::set_var("BACKEND_URL", "testserver");
+            std::env::set_var("BACKEND_PORT", "8180");
+            std::env::set_var("DATABASE_URL", "postgres://test:test@localhost/test");
         }
         let config = Config::from_env();
         assert_eq!(config.server, "testserver");
