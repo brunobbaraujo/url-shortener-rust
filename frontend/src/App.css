@@ -1,9 +1,11 @@
 /* Add these to your existing App.css */
 .url-shortener {
     max-width: 600px;
-    margin: 0 auto;
-    padding: 2rem;
-    text-align: center;
+    position: fixed;
+    inset: 0;
+    width: fit-content;
+    height: fit-content;
+    margin: auto;
 }
 
 .description {
