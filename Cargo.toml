@@ -5,5 +5,9 @@ edition = "2024"
 
 [dependencies]
 axum = "0.8.4"
+chrono = "0.4.41"
+deadpool = "0.12.2"
+diesel = { version = "2.2.12", features = ["chrono"] }
+diesel-async = { version = "0.6.1", features = ["deadpool", "postgres"] }
 dotenv = "0.15.0"
 tokio = { version = "1.46.1", features = ["macros", "rt-multi-thread"] }

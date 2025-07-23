@@ -1,6 +1,9 @@
 use axum::{Router, routing::get, routing::post};
+
 mod config;
+mod db;
 mod routes;
+pub mod schema;
 
 use crate::routes::route;
 
@@ -12,6 +15,7 @@ async fn main() {
     let config = Config::from_env();
     let routes = route::create_routes();
     let mut app = Router::new();
+
     let mut routes_iter = routes.into_iter();
     while let Some(route) = routes_iter.next() {
         app = match route.method {
