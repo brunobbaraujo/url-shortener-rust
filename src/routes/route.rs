@@ -12,13 +12,17 @@ pub enum Method {
 pub struct Route<T> {
     pub path: String,
     pub method: Method,
-    pub handler: fn() -> T,
+    pub handler: fn() -> Box<dyn Future<Output = T> + Unpin>,
 }
 
 use super::shortener;
 
 impl<T> Route<T> {
-    pub fn new(path: &str, method: Method, handler: fn() -> T) -> Self {
+    pub fn new(
+        path: &str,
+        method: Method,
+        handler: fn() -> Box<dyn Future<Output = T> + Unpin>,
+    ) -> Self {
         Route {
             path: path.to_string(),
             method,
@@ -27,6 +31,6 @@ impl<T> Route<T> {
     }
 }
 
-pub fn create_routes() -> Vec<Route<impl Future<Output = String>>> {
-    vec![shortener::shortener_route()]
+pub async fn create_routes() -> Vec<Route<String>> {
+    vec![shortener::shortener_route().await]
 }

@@ -6,9 +6,8 @@ diesel::table! {
         original_url -> Varchar,
         #[max_length = 10]
         short_code -> Varchar,
-        click_count -> Nullable<Int4>,
-        last_accessed -> Nullable<Timestamptz>,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
+        click_count -> Int4,
     }
 }

@@ -6,15 +6,14 @@ use crate::db::pool;
 use crate::schema::shortened_urls;
 // ordinary diesel model setup
 
-#[derive(Queryable, QueryableByName, Selectable)]
+#[derive(Queryable, QueryableByName, Selectable, Insertable)]
 #[diesel(table_name = crate::schema::shortened_urls)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct ShortenedUrl {
     pub id: i32,
     pub original_url: String,
     pub short_code: String,
-    pub click_count: Option<i32>,
-    pub last_accessed: Option<DateTime<Utc>>,
+    pub click_count: i32,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -31,10 +30,21 @@ pub async fn get_shortened_url_by_code(code: &str) -> Vec<ShortenedUrl> {
         .filter(shortened_urls::short_code.eq(code))
         .select(ShortenedUrl::as_select())
         .limit(1)
-        // execute the query via the provided
-        // async `diesel_async::RunQueryDsl`
         .load(conn)
         .await
         .unwrap_or_else(|_| vec![]);
+
+    // Increment click count if the URL exists
+    if !data.is_empty() {
+        diesel::insert_into(shortened_urls::table)
+            .values(&data)
+            .on_conflict(shortened_urls::short_code)
+            .do_update()
+            .set(shortened_urls::click_count.eq(diesel::dsl::sql("shortened_urls.click_count + 1")))
+            .execute(conn)
+            .await
+            .unwrap();
+    }
+
     data
 }
