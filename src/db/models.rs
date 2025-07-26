@@ -18,7 +18,7 @@ pub struct ShortenedUrl {
     pub updated_at: DateTime<Utc>,
 }
 
-pub async fn get_shortened_url_by_code(code: &str) -> Vec<ShortenedUrl> {
+pub async fn get_shortened_url_by_codes(code: Vec<&str>) -> Vec<ShortenedUrl> {
     if code.len() != 10 {
         return vec![]; // Return empty if code is not valid
     }
@@ -27,7 +27,7 @@ pub async fn get_shortened_url_by_code(code: &str) -> Vec<ShortenedUrl> {
     let conn = &mut conn_pool.await.get().await.unwrap();
 
     let data = shortened_urls::table
-        .filter(shortened_urls::short_code.eq(code))
+        .filter(shortened_urls::short_code.eq_any(code))
         .select(ShortenedUrl::as_select())
         .limit(1)
         .load(conn)
@@ -47,4 +47,38 @@ pub async fn get_shortened_url_by_code(code: &str) -> Vec<ShortenedUrl> {
     }
 
     data
+}
+
+pub async fn insert_shortened_url(
+    original_url: &str,
+    short_code: &str,
+) -> Result<ShortenedUrl, diesel::result::Error> {
+    if short_code.len() != 10 {
+        return Err(diesel::result::Error::DatabaseError(
+            diesel::result::DatabaseErrorKind::SerializationFailure,
+            Box::new(String::from(
+                "Short code must be exactly 10 characters long",
+            )),
+        ));
+    }
+
+    let conn_pool = pool::get_connection_pool();
+    let conn = &mut conn_pool.await.get().await.unwrap();
+
+    let new_url = ShortenedUrl {
+        id: 0, // ID will be auto-incremented
+        original_url: original_url.to_string(),
+        short_code: short_code.to_string(),
+        click_count: 0,
+        created_at: Utc::now(),
+        updated_at: Utc::now(),
+    };
+
+    diesel::insert_into(shortened_urls::table)
+        .values(&new_url)
+        .execute(conn)
+        .await
+        .expect("Can't insert code on table");
+
+    Ok(new_url)
 }

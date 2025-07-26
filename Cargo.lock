@@ -1221,6 +1221,8 @@ dependencies = [
  "diesel",
  "diesel-async",
  "dotenv",
+ "serde",
+ "sha2",
  "tokio",
 ]
 

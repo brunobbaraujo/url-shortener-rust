@@ -1,3 +1,5 @@
-pub mod generated_urls;
-pub mod route;
-pub mod shortener;
+mod generated_urls;
+mod shortener;
+
+pub use generated_urls::redirect_handler;
+pub use shortener::shorten_handler;
