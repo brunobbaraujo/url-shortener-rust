@@ -5,6 +5,7 @@ pub struct Config {
     pub server: String,
     pub port: u16,
     pub database_url: String,
+    pub pool_size: usize,
 }
 
 impl Config {
@@ -17,11 +18,16 @@ impl Config {
             .unwrap_or(3000);
         let database_url = std::env::var("DATABASE_URL")
             .unwrap_or_else(|_| "postgres://root:root@localhost/postgres".to_string());
+        let pool_size = std::env::var("POOL_SIZE")
+            .unwrap_or_else(|_| "10".to_string())
+            .parse()
+            .unwrap_or(10);
 
         Config {
             server,
             port,
             database_url,
+            pool_size,
         }
     }
 }
