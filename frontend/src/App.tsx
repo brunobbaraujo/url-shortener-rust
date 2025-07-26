@@ -18,7 +18,7 @@ function App() {
     setCopied(false);
 
     // Validate URL
-    if (!url) {
+    if (url.trim() == "") {
       setError("Please enter a URL");
       return;
     }
