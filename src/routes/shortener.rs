@@ -1,6 +1,7 @@
-use crate::db::{get_shortened_url_by_codes, insert_shortened_url};
+use crate::db::{get_shortened_code_by_url, get_shortened_url_by_codes, insert_shortened_url};
+use axum;
 use axum::extract::Json;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
 #[derive(Deserialize)]
@@ -8,16 +9,31 @@ pub struct ShortenRequest {
     pub url: String,
 }
 
-pub async fn shorten_handler(Json(request): Json<ShortenRequest>) -> String {
+#[derive(Serialize)]
+pub struct ShortenResponse {
+    pub short_code: String,
+}
+
+pub async fn shorten_handler(Json(request): Json<ShortenRequest>) -> Json<ShortenResponse> {
+    // Validate if URL is in db
+    let existing_short_code = get_shortened_code_by_url(&request.url).await;
+    if let Some(short_code) = existing_short_code {
+        // If URL already exists, return the existing short code
+        return Json(ShortenResponse {
+            short_code: short_code,
+        });
+    }
+
     let short_code = generate_short_code(&request.url).await;
 
     // Insert the URL into the database
     if let Err(_) = insert_shortened_url(&request.url, &short_code).await {
         // If insertion fails, return error code
-        return "ERROR".to_string();
+        panic!("Failed to insert shortened URL into the database");
     }
 
-    short_code
+    // Return the generated short code
+    Json(ShortenResponse { short_code })
 }
 
 async fn generate_short_code(url: &str) -> String {

@@ -49,6 +49,20 @@ pub async fn get_shortened_url_by_codes(code: Vec<&str>) -> Vec<ShortenedUrl> {
     data
 }
 
+pub async fn get_shortened_code_by_url(url: &str) -> Option<String> {
+    let conn_pool = pool::get_connection_pool();
+    let conn = &mut conn_pool.await.get().await.unwrap();
+
+    let data = shortened_urls::table
+        .filter(shortened_urls::original_url.eq(url))
+        .select(shortened_urls::short_code)
+        .first::<String>(conn)
+        .await
+        .ok();
+
+    data
+}
+
 pub async fn insert_shortened_url(
     original_url: &str,
     short_code: &str,
