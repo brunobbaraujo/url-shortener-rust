@@ -1,4 +1,4 @@
-use crate::db::{get_shortened_code_by_url, get_shortened_url_by_codes, insert_shortened_url};
+use crate::db::{get_original_url_by_codes, get_shortened_code_by_url, insert_shortened_url};
 use axum;
 use axum::extract::Json;
 use serde::{Deserialize, Serialize};
@@ -74,7 +74,7 @@ async fn generate_short_code(url: &str) -> String {
     let candidate_refs: Vec<&str> = candidates.iter().map(|s| s.as_str()).collect();
 
     // Query database for existing codes
-    let existing_codes = get_shortened_url_by_codes(candidate_refs).await;
+    let existing_codes = get_original_url_by_codes(candidate_refs).await;
     let existing_set: std::collections::HashSet<String> = existing_codes
         .iter()
         .map(|url| url.short_code.clone())

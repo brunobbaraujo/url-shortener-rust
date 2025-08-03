@@ -6,7 +6,7 @@ use crate::db::pool;
 use crate::schema::shortened_urls;
 // ordinary diesel model setup
 
-#[derive(Queryable, QueryableByName, Selectable, Insertable)]
+#[derive(Queryable, QueryableByName, Selectable, Insertable, Debug)]
 #[diesel(table_name = crate::schema::shortened_urls)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct ShortenedUrl {
@@ -18,18 +18,13 @@ pub struct ShortenedUrl {
     pub updated_at: DateTime<Utc>,
 }
 
-pub async fn get_shortened_url_by_codes(code: Vec<&str>) -> Vec<ShortenedUrl> {
-    if code.len() != 10 {
-        return vec![]; // Return empty if code is not valid
-    }
-
+pub async fn get_original_url_by_codes(codes: Vec<&str>) -> Vec<ShortenedUrl> {
     let conn_pool = pool::get_connection_pool();
     let conn = &mut conn_pool.await.get().await.unwrap();
 
     let data = shortened_urls::table
-        .filter(shortened_urls::short_code.eq_any(code))
+        .filter(shortened_urls::short_code.eq_any(codes))
         .select(ShortenedUrl::as_select())
-        .limit(1)
         .load(conn)
         .await
         .unwrap_or_else(|_| vec![]);
