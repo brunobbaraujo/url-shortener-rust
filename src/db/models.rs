@@ -18,6 +18,16 @@ pub struct ShortenedUrl {
     pub updated_at: DateTime<Utc>,
 }
 
+#[derive(Insertable)]
+#[diesel(table_name = crate::schema::shortened_urls)]
+pub struct NewShortenedUrl {
+    pub original_url: String,
+    pub short_code: String,
+    pub click_count: i32,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
 pub async fn get_original_url_by_codes(codes: Vec<&str>) -> Vec<ShortenedUrl> {
     let conn_pool = pool::get_connection_pool();
     let conn = &mut conn_pool.await.get().await.unwrap();
@@ -61,7 +71,7 @@ pub async fn get_shortened_code_by_url(url: &str) -> Option<String> {
 pub async fn insert_shortened_url(
     original_url: &str,
     short_code: &str,
-) -> Result<ShortenedUrl, diesel::result::Error> {
+) -> Result<NewShortenedUrl, diesel::result::Error> {
     if short_code.len() != 10 {
         return Err(diesel::result::Error::DatabaseError(
             diesel::result::DatabaseErrorKind::SerializationFailure,
@@ -74,8 +84,7 @@ pub async fn insert_shortened_url(
     let conn_pool = pool::get_connection_pool();
     let conn = &mut conn_pool.await.get().await.unwrap();
 
-    let new_url = ShortenedUrl {
-        id: 0, // ID will be auto-incremented
+    let new_url = NewShortenedUrl {
         original_url: original_url.to_string(),
         short_code: short_code.to_string(),
         click_count: 0,
