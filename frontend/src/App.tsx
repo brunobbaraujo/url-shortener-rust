@@ -18,7 +18,7 @@ function App() {
     setCopied(false);
 
     // Validate URL
-    if (!url) {
+    if (!url || url.trim().length === 0) {
       setError("Please enter a URL");
       return;
     }
@@ -28,6 +28,7 @@ function App() {
 
       const response = await fetch(API_ENDPOINTS.shorten, {
         method: "POST",
+        mode: "cors",
         headers: {
           "Content-Type": "application/json",
         },
@@ -39,7 +40,9 @@ function App() {
       }
 
       const data = await response.json();
-      setShortUrl(data.short_url);
+      // Construct the full shortened URL from the short_code using current domain
+      const fullShortUrl = `${window.location.origin}/${data.short_code}`;
+      setShortUrl(fullShortUrl);
     } catch (err) {
       setError(
         err instanceof Error

@@ -19,8 +19,6 @@ services:
       DATABASE_URL: postgres://root:root@db:5432/postgres
       BACKEND_URL: 0.0.0.0
       BACKEND_PORT: 3000
-    ports:
-      - "3000:3000"
     depends_on:
       - db
 
@@ -28,14 +26,22 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    ports:
-      - "5173:5173"
     volumes:
       - ./frontend:/app
       - /app/node_modules
     environment:
-      - BACKEND_URL=http://backend:3000
+      - VITE_BACKEND_URL=http://localhost
     depends_on:
+      - backend
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - frontend
       - backend
 
 volumes:

@@ -1,4 +1,5 @@
 use axum::{Router, routing::get, routing::post};
+use tower_http::cors::CorsLayer;
 
 mod config;
 mod db;
@@ -14,7 +15,8 @@ async fn main() {
 
     let app = Router::new()
         .route("/api/shorten", post(routes::shorten_handler))
-        .route("/:code", get(routes::redirect_handler));
+        .route("/{code}", get(routes::redirect_handler))
+        .layer(CorsLayer::permissive());
 
     let listener = tokio::net::TcpListener::bind(format!("{}:{}", config.server, config.port))
         .await

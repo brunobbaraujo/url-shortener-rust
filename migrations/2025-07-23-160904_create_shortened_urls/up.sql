@@ -8,4 +8,3 @@ CREATE TABLE "shortened_urls"(
 	"click_count" INT4,
 	"last_accessed" TIMESTAMPTZ
 );
-

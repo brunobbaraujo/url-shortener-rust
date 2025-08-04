@@ -6,7 +6,7 @@ use crate::db::pool;
 use crate::schema::shortened_urls;
 // ordinary diesel model setup
 
-#[derive(Queryable, QueryableByName, Selectable, Insertable)]
+#[derive(Queryable, QueryableByName, Selectable, Insertable, Debug)]
 #[diesel(table_name = crate::schema::shortened_urls)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct ShortenedUrl {
@@ -18,18 +18,23 @@ pub struct ShortenedUrl {
     pub updated_at: DateTime<Utc>,
 }
 
-pub async fn get_shortened_url_by_codes(code: Vec<&str>) -> Vec<ShortenedUrl> {
-    if code.len() != 10 {
-        return vec![]; // Return empty if code is not valid
-    }
+#[derive(Insertable, QueryableByName)]
+#[diesel(table_name = crate::schema::shortened_urls)]
+pub struct NewShortenedUrl {
+    pub original_url: String,
+    pub short_code: String,
+    pub click_count: i32,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
 
+pub async fn get_original_url_by_codes(codes: Vec<&str>) -> Vec<ShortenedUrl> {
     let conn_pool = pool::get_connection_pool();
     let conn = &mut conn_pool.await.get().await.unwrap();
 
     let data = shortened_urls::table
-        .filter(shortened_urls::short_code.eq_any(code))
+        .filter(shortened_urls::short_code.eq_any(codes))
         .select(ShortenedUrl::as_select())
-        .limit(1)
         .load(conn)
         .await
         .unwrap_or_else(|_| vec![]);
@@ -45,6 +50,20 @@ pub async fn get_shortened_url_by_codes(code: Vec<&str>) -> Vec<ShortenedUrl> {
             .await
             .unwrap();
     }
+
+    data
+}
+
+pub async fn get_shortened_code_by_url(url: &str) -> Option<String> {
+    let conn_pool = pool::get_connection_pool();
+    let conn = &mut conn_pool.await.get().await.unwrap();
+
+    let data = shortened_urls::table
+        .filter(shortened_urls::original_url.eq(url))
+        .select(shortened_urls::short_code)
+        .first::<String>(conn)
+        .await
+        .ok();
 
     data
 }
@@ -65,8 +84,7 @@ pub async fn insert_shortened_url(
     let conn_pool = pool::get_connection_pool();
     let conn = &mut conn_pool.await.get().await.unwrap();
 
-    let new_url = ShortenedUrl {
-        id: 0, // ID will be auto-incremented
+    let new_url = NewShortenedUrl {
         original_url: original_url.to_string(),
         short_code: short_code.to_string(),
         click_count: 0,
@@ -74,11 +92,18 @@ pub async fn insert_shortened_url(
         updated_at: Utc::now(),
     };
 
-    diesel::insert_into(shortened_urls::table)
+    let inserted_results = diesel::insert_into(shortened_urls::table)
         .values(&new_url)
+        .returning(shortened_urls::id)
         .execute(conn)
-        .await
-        .expect("Can't insert code on table");
+        .await?;
 
-    Ok(new_url)
+    Ok(ShortenedUrl {
+        id: inserted_results as i32,
+        original_url: new_url.original_url,
+        short_code: new_url.short_code,
+        click_count: new_url.click_count,
+        created_at: new_url.created_at,
+        updated_at: new_url.updated_at,
+    })
 }
