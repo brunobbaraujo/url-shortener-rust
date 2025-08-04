@@ -2,7 +2,6 @@ use crate::db::{get_original_url_by_codes, get_shortened_code_by_url, insert_sho
 use axum;
 use axum::extract::Json;
 use axum::http::StatusCode;
-use axum::response::Response;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
@@ -16,14 +15,14 @@ pub struct ShortenResponse {
     pub short_code: String,
 }
 
-pub async fn shorten_handler(Json(request): Json<ShortenRequest>) -> Result<Json<ShortenResponse>, StatusCode> {
+pub async fn shorten_handler(
+    Json(request): Json<ShortenRequest>,
+) -> Result<Json<ShortenResponse>, StatusCode> {
     // Validate if URL is in db
     let existing_short_code = get_shortened_code_by_url(&request.url).await;
     if let Some(short_code) = existing_short_code {
         // If URL already exists, return the existing short code
-        return Ok(Json(ShortenResponse {
-            short_code: short_code,
-        }));
+        return Ok(Json(ShortenResponse { short_code }));
     }
 
     let short_code = generate_short_code(&request.url).await;
