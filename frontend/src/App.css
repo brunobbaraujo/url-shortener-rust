@@ -109,3 +109,7 @@
 .copy-button:hover {
     background-color: #16a34a;
 }
+
+.not-found-actions {
+    margin-top: 2rem;
+}
