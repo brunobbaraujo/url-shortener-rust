@@ -1,5 +1,4 @@
 use crate::db::{get_original_url_by_codes, get_shortened_code_by_url, insert_shortened_url};
-use axum;
 use axum::extract::Json;
 use axum::http::StatusCode;
 use serde::{Deserialize, Serialize};
@@ -28,8 +27,12 @@ pub async fn shorten_handler(
     let short_code = generate_short_code(&request.url).await;
 
     // Insert the URL into the database
-    if let Err(_) = insert_shortened_url(&request.url, &short_code).await {
+    if let Err(err) = insert_shortened_url(&request.url, &short_code).await {
         // If insertion fails, return error code
+        println!(
+            "Failed to insert shortened URL for '{}': {}",
+            &request.url, err
+        );
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 

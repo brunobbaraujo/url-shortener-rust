@@ -18,7 +18,7 @@ pub struct ShortenedUrl {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Insertable)]
+#[derive(Insertable, QueryableByName)]
 #[diesel(table_name = crate::schema::shortened_urls)]
 pub struct NewShortenedUrl {
     pub original_url: String,
@@ -71,7 +71,7 @@ pub async fn get_shortened_code_by_url(url: &str) -> Option<String> {
 pub async fn insert_shortened_url(
     original_url: &str,
     short_code: &str,
-) -> Result<NewShortenedUrl, diesel::result::Error> {
+) -> Result<ShortenedUrl, diesel::result::Error> {
     if short_code.len() != 10 {
         return Err(diesel::result::Error::DatabaseError(
             diesel::result::DatabaseErrorKind::SerializationFailure,
@@ -92,11 +92,18 @@ pub async fn insert_shortened_url(
         updated_at: Utc::now(),
     };
 
-    diesel::insert_into(shortened_urls::table)
+    let inserted_results = diesel::insert_into(shortened_urls::table)
         .values(&new_url)
+        .returning(shortened_urls::id)
         .execute(conn)
-        .await
-        .expect("Can't insert code on table");
+        .await?;
 
-    Ok(new_url)
+    Ok(ShortenedUrl {
+        id: inserted_results as i32,
+        original_url: new_url.original_url,
+        short_code: new_url.short_code,
+        click_count: new_url.click_count,
+        created_at: new_url.created_at,
+        updated_at: new_url.updated_at,
+    })
 }
