@@ -1,29 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import "./App.css";
 import { API_ENDPOINTS } from "./config";
-import NotFound from "./NotFound";
 
 function App() {
-  const [currentPath, setCurrentPath] = useState(window.location.pathname);
   const [url, setUrl] = useState("");
   const [shortUrl, setShortUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    const handlePopState = () => {
-      setCurrentPath(window.location.pathname);
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
-
-  // Handle 404 page
-  if (currentPath === '/404' || currentPath === '/404.html') {
-    return <NotFound />;
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
