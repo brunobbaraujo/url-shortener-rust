@@ -1,8 +1,10 @@
 import "./App.css";
+import { useNavigate } from "react-router";
 
 function NotFound() {
+  const navigate = useNavigate();
   const goHome = () => {
-    window.location.href = "/";
+    navigate("/");
   };
 
   return (
